@@ -18,10 +18,43 @@ void PrintQ( queue<pair<int,int>> q){
 }
 
 
-list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<pair<bool, int>>> & visited ,queue<pair<int, int>> &q,int h) {
+int findMin(vector<vector<int>>& grid, queue<pair<int,int>> q) {
+    int minVal = INT_MAX; // Valeur maximale possible d'un entier
+
+    while (!q.empty()) {
+        if (grid[q.front().first][q.front().second] < minVal) {
+            minVal = grid[q.front().first][q.front().second]; // Met à jour la valeur minimale si une valeur inférieure est trouvée
+        }
+        q.pop(); // Supprime le premier élément de la queue
+    }
+
+    return minVal; // Retourne la valeur minimale
+}
+
+queue<pair<int, int>> UpdateFront(vector<vector<int>>& grid, queue<pair<int, int>> &q, queue<pair<int, int>> &qFront,int &h){
+    
+    queue<pair<int, int>> qUpdt;
+    for(int i =0;i<qFront.size();i++) {
+        if (grid[qFront.front().first][qFront.front().second] ==h) {
+            qUpdt.push(qFront.front()); 
+            qFront.pop(); // Supprime le premier élément de la queue
+        }
+        else{
+            qFront.push(qFront.front()); 
+            qFront.pop();
+        }
+    }
+    while (!q.empty()) {
+        qUpdt.push(q.front());
+        q.pop(); // Supprime le premier élément de la queue
+
+    }
+    return qUpdt;
+}
+
+list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<pair<bool, int>>> & visited, queue<pair<int, int>> &q, queue<pair<int, int>> &qFront,int &h) {
     int numRows = grid.size();
     int numCols = grid[0].size();
-
 
     // Définir les directions possibles (haut, droite, bas, gauche)
     vector<int> dx = {1, -1, 0, 0, 1, -1, 1, -1};
@@ -34,7 +67,7 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
     //vector<vector<bool>> visited_nl(numRows, vector<bool>(numCols, false));
     // Ajouter le point de départ à la file d'attente et le marquer comme visité
     
-    visited[q.front().first][q.front().second] = {true,0};
+    visited[q.front().first][q.front().second] = {true,-0};
     int Layer_depth=1;
 
     // Parcourir chaque couche jusqu'à ce que la file d'attente soit vide
@@ -62,6 +95,7 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
                 // Spill Point detection
                 if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]<h) {
                         List_sp.push_back({newX, newY});
+                        //visited[newX][newY] = {true,Layer_depth+1}; //=Make statistic upon the results
                 }
                  // Next level detection
                 else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]==h+1) {
@@ -69,12 +103,12 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
                         visited[newX][newY] = {true,Layer_depth+1};
                         cout << "H+1 point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
                 }
-/*                 // Supperiors level detection (lvl> h+1)
+                // Supperiors level detection (lvl> h+1)
                 else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]>h+1) {
-                        qSupp.push({newX, newY});
+                        qFront.push({newX, newY});
                         visited[newX][newY] = {true,Layer_depth+1};
                         cout << "H+Nsupp  point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
-                } */
+                }
                 // Vérifier si les nouvelles coordonnées sont valides et non visitées
                 else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]==h) {
 
@@ -109,12 +143,14 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
         }
     }
 /*     else{
-            while (!qSupp.empty()) {
-            q.push(qSupp.front());
-            qSupp.pop();
+        cout<<"!!Aucune val de qNext. Prend les val de qFront!!"<<endl;
+            while (!qFront.empty()) {
+            q.push(qFront.front());
+            qFront.pop();
+            
         }
+        h=findMin(grid,q);
     } */
-    PrintQ(q);
     return List_sp;
 }
 
@@ -144,6 +180,7 @@ list<pair<int,int>> Find_Spill_Point(vector<vector<int>> grid, int startX, int s
     pair<int,int> coor_spill_pt={startX,startY};
     int h = grid[startX][startY];
     queue<pair<int, int>> q;
+    queue<pair<int, int>> qFront;
     q.push({startX, startY});
     list<pair<int,int>> List_sp;
     vector<vector<pair<bool, int>>> visited(rows, vector<pair<bool, int>>(cols, pair<bool, int>(false, 0)));
@@ -154,19 +191,28 @@ list<pair<int,int>> Find_Spill_Point(vector<vector<int>> grid, int startX, int s
             Raise_level(grid, visited,h);
             cout<<"level rose to "<< h<<endl;
         }
-        cout << "##########h =  "<<h<<endl;
+        cout << "###################h =  "<<h<<endl;
 
-        list<pair<int,int>>List_sp= propagateByLayer(grid,  visited, q, h);
+        list<pair<int,int>>List_sp= propagateByLayer(grid,  visited, q, qFront, h);
+        cout << "##################qFront =  "<<endl;
+        PrintQ(qFront);
         cout << "##################q =  "<<endl;
         PrintQ(q);
 
         if (List_sp.size()!=0){
+            
             return List_sp;
         }
-        
+        do{
+            h++;
+            cout <<"h="<<h<<endl;
+            q=UpdateFront(grid, q,qFront,h);
+        }while(q.empty());
 
-        h++;
-
+        cout << "updated qFront =  "<<endl;
+        PrintQ(qFront);
+        cout << "updated q =  "<<endl;
+        PrintQ(q);
 
         for (int i = 0; i < grid.size(); i++) {
             for (int j = 0; j < grid[0].size(); j++) {
@@ -194,27 +240,27 @@ int main(){
         vector<vector<int>> grid = {
                                 //10
     {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-    {3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3},
-    {3, 2, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},//10
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
+    {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3},
+    {3, 3, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},//10
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 3, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
     {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3},
     {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
     };
-    list<pair<int,int>> List_sp=Find_Spill_Point(grid, 10, 6);
+    list<pair<int,int>> List_sp=Find_Spill_Point(grid, 10, 7);
 
     cout << "Spill point detected at coordonate : "<<endl;
     for (const auto& element : List_sp)
