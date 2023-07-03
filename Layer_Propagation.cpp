@@ -24,14 +24,14 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
 
 
     // Définir les directions possibles (haut, droite, bas, gauche)
-    vector<int> dx = {-1, 0, 1, -1, 0, 1,-1, 0, 1,};
-    vector<int> dy = {-1, -1, -1, 0, 0, 0, 1, 1, 1};
+    vector<int> dx = {1, -1, 0, 0, 1, -1, 1, -1};
+    vector<int> dy = {0, 0, 1, -1, 1, -1, -1, 1};
 
     // Créer une file d'attente pour la propagation par couche
     list<pair<int,int>> List_sp;
     queue<pair<int, int>> qNextLevel;
-    vector<vector<bool>> visited_sp(numRows, vector<bool>(numCols, false));
-    vector<vector<bool>> visited_nl(numRows, vector<bool>(numCols, false));
+    queue<pair<int, int>> qSupp;
+    //vector<vector<bool>> visited_nl(numRows, vector<bool>(numCols, false));
     // Ajouter le point de départ à la file d'attente et le marquer comme visité
     
     visited[q.front().first][q.front().second] = {true,0};
@@ -60,18 +60,23 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
                 int newY = y + dy[j];
 
                 // Spill Point detection
-                if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited_sp[newX][newY] && grid[newX][newY]<h) {
+                if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]<h) {
                         List_sp.push_back({newX, newY});
-                        //visited_sp[newX][newY]=true;  to make stats overs outputs
                 }
                  // Next level detection
-                if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited_nl[newX][newY] && grid[newX][newY]==h+1) {
+                else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]==h+1) {
                         qNextLevel.push({newX, newY});
-                        visited_nl[newX][newY]=true;
+                        visited[newX][newY] = {true,Layer_depth+1};
                         cout << "H+1 point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
                 }
+/*                 // Supperiors level detection (lvl> h+1)
+                else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]>h+1) {
+                        qSupp.push({newX, newY});
+                        visited[newX][newY] = {true,Layer_depth+1};
+                        cout << "H+Nsupp  point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
+                } */
                 // Vérifier si les nouvelles coordonnées sont valides et non visitées
-                if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]==h) {
+                else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]==h) {
 
                     // Ajouter les nouvelles coordonnées à la file d'attente et les marquer comme visitées
                     q.push({newX, newY});
@@ -97,10 +102,19 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
 
 
     } 
-    while (!qNextLevel.empty()) {
-        q.push(qNextLevel.front());
-        qNextLevel.pop();
+    if (!qNextLevel.empty()){
+        while (!qNextLevel.empty()) {
+            q.push(qNextLevel.front());
+            qNextLevel.pop();
+        }
     }
+/*     else{
+            while (!qSupp.empty()) {
+            q.push(qSupp.front());
+            qSupp.pop();
+        }
+    } */
+    PrintQ(q);
     return List_sp;
 }
 
@@ -137,6 +151,8 @@ list<pair<int,int>> Find_Spill_Point(vector<vector<int>> grid, int startX, int s
     while (h<10){
         if (q.empty()){
             q.push({startX, startY});
+            Raise_level(grid, visited,h);
+            cout<<"level rose to "<< h<<endl;
         }
         cout << "##########h =  "<<h<<endl;
 
@@ -149,11 +165,10 @@ list<pair<int,int>> Find_Spill_Point(vector<vector<int>> grid, int startX, int s
         }
         
 
-        Raise_level(grid, visited,h);
         h++;
 
 
-/*         for (int i = 0; i < grid.size(); i++) {
+        for (int i = 0; i < grid.size(); i++) {
             for (int j = 0; j < grid[0].size(); j++) {
                 cout << grid[i][j] ;
             }
@@ -164,7 +179,7 @@ list<pair<int,int>> Find_Spill_Point(vector<vector<int>> grid, int startX, int s
                 cout << visited[i][j].first ;
             }
             cout << endl;
-        }  */
+        } 
     }
 
 
@@ -179,24 +194,24 @@ int main(){
         vector<vector<int>> grid = {
                                 //10
     {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-    {3, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3},
-    {3, 2, 2, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},//10
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
-    {3, 2, 2, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
-    {3, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3},
+    {3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3},
+    {3, 2, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},//10
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 2, 2, 3},
+    {3, 2, 3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3},
+    {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3},
     {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
     };
     list<pair<int,int>> List_sp=Find_Spill_Point(grid, 10, 6);
