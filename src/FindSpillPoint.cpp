@@ -1,4 +1,4 @@
-#include "../include/Layer_Propagation.h"
+#include "../include/FindSpillPoint.h"
 
 using namespace std;
 
@@ -124,7 +124,7 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
             cout << "Visiting point (" << x << ", " << y << ") with value " << grid[x][y] << endl;
 
             // Browse possible directions to move
-            for (int j = 0; j < 9; j++) {
+            for (int j = 0; j < 8; j++) {
                 int newX = x + dx[j];
                 int newY = y + dy[j];
 

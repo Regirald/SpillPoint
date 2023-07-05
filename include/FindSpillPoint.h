@@ -1,5 +1,5 @@
-#ifndef LAYER_PROPAGATION
-#define LAYER_PROPAGATION
+#ifndef FINDSPILLPOINT
+#define FINDSPILLPOINT
 #include <iostream>
 #include <vector>
 #include <queue>

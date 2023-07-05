@@ -1,6 +1,6 @@
 #include <iostream>
-#include "../include/Layer_Propagation.h"
-#include "Layer_Propagation.cpp"
+//#include "../include/FindSpillPoint.h"
+#include "FindSpillPoint.cpp"
 using namespace std;
 
 int main(){
