@@ -129,26 +129,31 @@ list<pair<int,int>>  propagateByLayer(vector<vector<int>>& grid, vector<vector<p
                 int newY = y + dy[j];
 
                 // Spill Point detection(lvl < h+1)
-                if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]<h) {
-                        List_sp.push_back({newX, newY});
-                        //visited[newX][newY] = {true,Layer_depth+1}; // Uncomment to accept duplicates (ana make statisitics)
+                if (!(newX >= 0 && newX < numRows && newY >= 0 && newY < numCols)){
+                    cout <<" visited point out of range"<<endl;
                 }
-                 // Next level detection (lvl = h+1)
-                else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]==h+1) {
-                        qNextLevel.push({newX, newY});
-                        visited[newX][newY] = {true,Layer_depth+1};
-                        cout << "H+1 point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
-                }
-                // Supperiors level detection (lvl > h+1)
-                else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]>h+1) {
-                        qFront.push({newX, newY});
-                        visited[newX][newY] = {true,Layer_depth+1};
-                        cout << "H+Nsupp  point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
-                }
-                // Same level detection (lvl = h)
-                else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]==h) {
-                    q.push({newX, newY});
-                    visited[newX][newY] = {true,Layer_depth};
+                else{
+                    if (!visited[newX][newY].first && grid[newX][newY]<h) {
+                            List_sp.push_back({newX, newY});
+                            //visited[newX][newY] = {true,Layer_depth+1}; // Uncomment to accept duplicates (ana make statisitics)
+                    }
+                    // Next level detection (lvl = h+1)
+                    else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]==h+1) {
+                            qNextLevel.push({newX, newY});
+                            visited[newX][newY] = {true,Layer_depth+1};
+                            cout << "H+1 point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
+                    }
+                    // Supperiors level detection (lvl > h+1)
+                    else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && !visited[newX][newY].first && grid[newX][newY]>h+1) {
+                            qFront.push({newX, newY});
+                            visited[newX][newY] = {true,Layer_depth+1};
+                            cout << "H+Nsupp  point (" << newX << ", " << newY << ") with value " << grid[newX][newY] << endl;
+                    }
+                    // Same level detection (lvl = h)
+                    else if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols && !visited[newX][newY].first && grid[newX][newY]==h) {
+                        q.push({newX, newY});
+                        visited[newX][newY] = {true,Layer_depth};
+                    }
                 }
             }
         }
